@@ -7,8 +7,8 @@
 #include <helpers/radiolib/CustomSX1262Wrapper.h>
 #include <helpers/radiolib/RadioLibWrappers.h>
 #include <helpers/SensorManager.h>
-#include <helpers/sensors/EnvironmentSensorManager.h>
 #include <WaveshareBoard.h>
+#include <helpers/sensors/EnvironmentSensorManager.h>
 
 #ifdef DISPLAY_CLASS
   #include <helpers/ui/SSD1306Display.h>
@@ -18,6 +18,8 @@
 extern WaveshareBoard board;
 extern WRAPPER_CLASS radio_driver;
 extern AutoDiscoverRTCClock rtc_clock;
+//extern SensorManager sensors;
+
 extern EnvironmentSensorManager sensors;
 
 #ifdef DISPLAY_CLASS

@@ -731,9 +731,11 @@ bool EnvironmentSensorManager::setSettingValue(const char* name, const char* val
 
 #if ENV_INCLUDE_GPS
 void EnvironmentSensorManager::initBasicGPS() {
-
-  //Serial1.setPins(PIN_GPS_TX, PIN_GPS_RX);
+#if (RP2040_PLATFORM)
   Serial1.setPinout(PIN_GPS_TX, PIN_GPS_RX);
+#else
+  Serial1.setPins(PIN_GPS_TX, PIN_GPS_RX);
+#endif
 
   #ifdef GPS_BAUD_RATE
   Serial1.begin(GPS_BAUD_RATE);

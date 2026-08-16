@@ -1,3 +1,4 @@
+#include "remote.h"
 #include "SensorMesh.h"
 
 #ifdef DISPLAY_CLASS
@@ -54,7 +55,7 @@ static char command[160];
 
 void setup() {
   Serial.begin(115200);
-  delay(1000);
+  delay(2000);
 
   board.begin();
 
@@ -107,6 +108,8 @@ void setup() {
   command[0] = 0;
 
   sensors.begin();
+  // Init Remote Controller
+  remoteInit();
 
   the_mesh.begin(fs);
 
@@ -147,6 +150,8 @@ void loop() {
 
   the_mesh.loop();
   sensors.loop();
+  // Loop Remote Controller
+  remoteLoop();
 #ifdef DISPLAY_CLASS
   ui_task.loop();
 #endif
