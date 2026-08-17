@@ -17,4 +17,7 @@ void setTelcoPTT(bool state);
 char readDTMF(void);
 void readRTCTime(void);
 
+void sendACK(void);
+void sendError(void);
+
 #endif // REMOTE_H

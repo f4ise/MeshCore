@@ -1,23 +1,23 @@
 //
 // Created by Wizado F4ISE on 11/08/2026.
 //
-#include <Wire.h>
+#include "remote.h"
 
-#include <M24M01.h>
-#include <TCA9548.h>
-#include <TCA9555.h>
-#include <RTClib.h>
-
+#include "helpers/RTC_RX8025T.h"
 #include "config.h"
 #include "d578.h"
 #include "dtmf.h"
-#include "remote.h"
-#include "RX8025T.h"
+
+#include <M24M01.h>
+#include <RTClib.h>
+#include <TCA9548.h>
+#include <TCA9555.h>
+#include <Wire.h>
 
 M24M01  eeprom(Wire, 0x50);
 PCA9546 muxi2c(0x70, &Wire1);
 TCA9555 pioRC(0x20, &Wire1);
-RX8025T rtc(Wire);
+RTC_RX8025T rtc(Wire);
 
 // Data RTC
 const bool DO_SET_TIME = true;
@@ -50,8 +50,6 @@ void remoteInit(void) {
   // RTC RX8025T
   if (rtc.setup()) {
     if (DO_SET_TIME) {
-      // DateTime dt = DateTime(now);
-      // sprintf(reply, "OK - clock set: %02d:%02d - %d/%d/%d UTC", dt.hour(), dt.minute(), dt.day(), dt.month(), dt.year());
       struct tm t = {};
       t.tm_year = SET_YEAR - 1900;
       t.tm_mon = SET_MONTH - 1;
@@ -181,4 +179,18 @@ void readRTCTime(void) {
            t.tm_wday, t.tm_year + 1900, t.tm_mon + 1, t.tm_mday,
            t.tm_hour, t.tm_min, t.tm_sec);
   Serial.println(buf);
+}
+
+void sendACK(void) {
+  Serial.println(F("Send ACK"));
+  setTelcoPTT(HIGH);
+  delay(PULSE_DURATION);
+  setTelcoPTT(LOW);
+}
+
+void sendError(void) {
+  Serial.println(F("Send Error"));
+  setTelcoPTT(HIGH);
+  delay(PULSE_DURATION);
+  setTelcoPTT(LOW);
 }
