@@ -108,6 +108,7 @@ void setup() {
   command[0] = 0;
 
   sensors.begin();
+
   // Init Remote Controller
   remoteInit();
 
@@ -150,8 +151,10 @@ void loop() {
 
   the_mesh.loop();
   sensors.loop();
+
   // Loop Remote Controller
   remoteLoop();
+
 #ifdef DISPLAY_CLASS
   ui_task.loop();
 #endif

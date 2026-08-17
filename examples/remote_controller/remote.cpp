@@ -1,33 +1,33 @@
 //
 // Created by Wizado F4ISE on 11/08/2026.
 //
-#include "remote.h"
+#include <Wire.h>
 
-#include "helpers/RTC_RX8025T.h"
+#include <M24M01.h>
+#include <TCA9548.h>
+#include <TCA9555.h>
+
+// #include "helpers/RTC_RX8025T.h"
 #include "config.h"
 #include "d578.h"
 #include "dtmf.h"
-
-#include <M24M01.h>
-#include <RTClib.h>
-#include <TCA9548.h>
-#include <TCA9555.h>
-#include <Wire.h>
+#include "MeshCore.h"
+#include "remote.h"
 
 M24M01  eeprom(Wire, 0x50);
 PCA9546 muxi2c(0x70, &Wire1);
 TCA9555 pioRC(0x20, &Wire1);
-RTC_RX8025T rtc(Wire);
+// RTC_RX8025T rtc(Wire);
 
 // Data RTC
-const bool DO_SET_TIME = true;
-const int SET_YEAR = 2026;  // full year, e.g. 2026
-const int SET_MONTH = 1;    // 1-12
-const int SET_DAY = 1;      // 1-31
-const int SET_DAY_OF_WEEK = 0;
-const int SET_HOUR = 0;    // 0-23
-const int SET_MIN = 0;      // 0-59
-const int SET_SEC = 0;      // 0-59
+// const bool DO_SET_TIME = true;
+// const int SET_YEAR = 2026;  // full year, e.g. 2026
+// const int SET_MONTH = 1;    // 1-12
+// const int SET_DAY = 1;      // 1-31
+// const int SET_DAY_OF_WEEK = 0;
+// const int SET_HOUR = 0;    // 0-23
+// const int SET_MIN = 0;      // 0-59
+// const int SET_SEC = 0;      // 0-59
 
 // Polling Interrupt
 bool irqNSTQ = false;
@@ -48,24 +48,24 @@ void remoteInit(void) {
     Serial.println(F("M24M01 NOT Found"));
 
   // RTC RX8025T
-  if (rtc.setup()) {
-    if (DO_SET_TIME) {
-      struct tm t = {};
-      t.tm_year = SET_YEAR - 1900;
-      t.tm_mon = SET_MONTH - 1;
-      t.tm_mday = SET_DAY;
-      t.tm_hour = SET_HOUR;
-      t.tm_min = SET_MIN;
-      t.tm_sec = SET_SEC;
-      t.tm_wday = SET_DAY_OF_WEEK;
-
-      rtc.setTime(&t);
-      Serial.println("Time set.");
-    }
-    Serial.println(F("RTC Initialized"));
-  }
-  else
-    Serial.println(F("RTC NOT Found"));
+  // if (rtc.setup()) {
+  //   if (DO_SET_TIME) {
+  //     struct tm t = {};
+  //     t.tm_year = SET_YEAR - 1900;
+  //     t.tm_mon = SET_MONTH - 1;
+  //     t.tm_mday = SET_DAY;
+  //     t.tm_hour = SET_HOUR;
+  //     t.tm_min = SET_MIN;
+  //     t.tm_sec = SET_SEC;
+  //     t.tm_wday = SET_DAY_OF_WEEK;
+  //
+  //     rtc.setTime(&t);
+  //     Serial.println("Time set.");
+  //   }
+  //   Serial.println(F("RTC Initialized"));
+  // }
+  // else
+  //   Serial.println(F("RTC NOT Found"));
 
   // Init I2C1
   Wire1.begin();
@@ -95,8 +95,7 @@ void remoteInit(void) {
   else
     Serial.println(F("PIO NOT Found"));
 
-  // Init relays
-  //
+  // Init Relays
 
   // Init D578
   initD578();
@@ -172,7 +171,7 @@ void setTelcoPTT(bool state) {
 
 void readRTCTime(void) {
   struct tm t;
-  rtc.getTime(&t);
+  // rtc.getTime(&t);
 
   char buf[40];
   snprintf(buf, sizeof(buf), "%d %04d-%02d-%02d %02d:%02d:%02d",
@@ -182,14 +181,16 @@ void readRTCTime(void) {
 }
 
 void sendACK(void) {
-  Serial.println(F("Send ACK"));
+  MESH_DEBUG_PRINTLN("Send ACK");
+  setChanAudio(LOW);
   setTelcoPTT(HIGH);
   delay(PULSE_DURATION);
   setTelcoPTT(LOW);
 }
 
 void sendError(void) {
-  Serial.println(F("Send Error"));
+  MESH_DEBUG_PRINTLN("Send Error");
+  setChanAudio(LOW);
   setTelcoPTT(HIGH);
   delay(PULSE_DURATION);
   setTelcoPTT(LOW);

@@ -3,6 +3,8 @@
 //
 #include <Arduino.h>
 
+#include <MeshCore.h>
+
 #include "dtmf.h"
 #include "remote.h"
 
@@ -40,53 +42,52 @@ void cmdDTMF(void) {
   cmdReady = false;
 
   cmdParsed = parseCmd();
-  Serial.print("cmdParsed: ");
-  Serial.println(cmdParsed);
+  MESH_DEBUG_PRINTLN("cmdParsed: %d", cmdParsed);
 
   switch (cmdParsed) {
     case 10:
-        Serial.println(F("CMD 0010"));
+        MESH_DEBUG_PRINTLN("CMD 0010");
         setRelayState(0, false);
         statusACK = true;
         break;
     case 11:
-        Serial.println(F("CMD 0011"));
+        MESH_DEBUG_PRINTLN("CMD 0011");
         setRelayState(0, true);
         statusACK = true;
         break;
     case 20:
-        Serial.println(F("CMD 0020"));
+        MESH_DEBUG_PRINTLN("CMD 0020");
         setRelayState(1, false);
         statusACK = true;
         break;
     case 21:
-        Serial.println(F("CMD 0021"));
+        MESH_DEBUG_PRINTLN("CMD 0021");
         setRelayState(1, true);
         statusACK = true;
         break;
     case 30:
-        Serial.println(F("CMD 0030"));
+        MESH_DEBUG_PRINTLN("CMD 0030");
         setRelayState(2, false);
         statusACK = true;
         break;
     case 31:
-        Serial.println(F("CMD 0031"));
+        MESH_DEBUG_PRINTLN("CMD 0031");
         setRelayState(2, true);
         statusACK = true;
         break;
     case 40:
-        Serial.println(F("CMD 0040"));
+        MESH_DEBUG_PRINTLN("CMD 0040");
         setRelayState(3, false);
         statusACK = true;
         break;
     case 41:
-        Serial.println(F("CMD 0041"));
+        MESH_DEBUG_PRINTLN("CMD 0041");
         setRelayState(3, true);
         statusACK = true;
         break;
     default:
-        Serial.println(F("CMD Not recognized"));
-        readRTCTime();
+        MESH_DEBUG_PRINTLN("CMD Not recognized");
+        //readRTCTime();
         break;
   }
   if (statusACK)

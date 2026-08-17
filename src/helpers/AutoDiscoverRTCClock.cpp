@@ -2,6 +2,7 @@
 #include "RTClib.h"
 #include <Melopero_RV3028.h>
 #include "RTC_RX8130CE.h"
+#include "RTC_RX8025T.h"
 
 static RTC_DS3231 rtc_3231;
 static bool ds3231_success = false;
@@ -15,10 +16,14 @@ static bool rtc_8563_success = false;
 static RTC_RX8130CE rtc_8130;
 static bool rtc_8130_success = false;
 
+static RTC_RX8025T rtc_8025;
+static bool rtc_8025_success = false;
+
 #define DS3231_ADDRESS   0x68
 #define RV3028_ADDRESS   0x52
 #define PCF8563_ADDRESS  0x51
 #define RX8130CE_ADDRESS 0x32
+#define RX8025T_ADDRESS  0x32
 
 bool AutoDiscoverRTCClock::i2c_probe(TwoWire& wire, uint8_t addr) {
   wire.beginTransmission(addr);
@@ -41,17 +46,30 @@ void AutoDiscoverRTCClock::begin(TwoWire& wire) {
     rv3028_success = true;
   }
 
+  #if !defined(DISABLE_PCF8563_PROBE)
   if (i2c_probe(wire, PCF8563_ADDRESS)) {
     MESH_DEBUG_PRINTLN("PCF8563: Found");
     rtc_8563_success = rtc_8563.begin(&wire);
   }
+  #endif
 
+  #if !defined(DISABLE_RX8130CE_PROBE)
   if (i2c_probe(wire, RX8130CE_ADDRESS)) {
     MESH_DEBUG_PRINTLN("RX8130CE: Found");
     rtc_8130.begin(&wire);
     rtc_8130_success = true;
     MESH_DEBUG_PRINTLN("RX8130CE: Initialized");
   }
+  #endif
+
+  #if !defined(DISABLE_RX8025T_PROBE)
+  if (i2c_probe(wire, RX8025T_ADDRESS)) {
+    MESH_DEBUG_PRINTLN("RX8025T: Found");
+    rtc_8025.begin(&wire);
+    rtc_8025_success = true;
+    MESH_DEBUG_PRINTLN("RX8025T: Initialized");
+  }
+  #endif
 }
 
 uint32_t AutoDiscoverRTCClock::getCurrentTime() {
@@ -79,6 +97,11 @@ uint32_t AutoDiscoverRTCClock::getCurrentTime() {
     return rtc_8130.now().unixtime();
   }
 
+  if (rtc_8025_success) {
+    MESH_DEBUG_PRINTLN("RX8025T: Reading time");
+    return rtc_8025.now().unixtime();
+  }
+
   return _fallback->getCurrentTime();
 }
 
@@ -94,6 +117,9 @@ void AutoDiscoverRTCClock::setCurrentTime(uint32_t time) {
   } else if (rtc_8130_success) {
     MESH_DEBUG_PRINTLN("RX8130CE: Setting time");
     rtc_8130.adjust(DateTime(time));
+  } else if (rtc_8025_success) {
+    MESH_DEBUG_PRINTLN("RX8025T: Setting time");
+    rtc_8025.adjust(DateTime(time));
   } else {
     _fallback->setCurrentTime(time);
   }
