@@ -779,6 +779,12 @@ void SensorMesh::begin(FILESYSTEM* fs) {
 
    board.setAdcMultiplier(_prefs.adc_multiplier);
 
+#ifdef FORCE_RTC_TIME
+  getRTCClock()->setCurrentTime(1715770351);  // 15 May 2024, 8:50pm
+  MESH_DEBUG_PRINTLN("FORCE RESET RTC TIME");
+#endif
+
+
 #if ENV_INCLUDE_GPS == 1
   applyGpsPrefs();
 #endif
