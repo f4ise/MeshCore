@@ -17,6 +17,12 @@ M24M01  eeprom(Wire, 0x50);
 PCA9546 muxi2c(0x70, &Wire1);
 TCA9555 pioRC(0x20, &Wire1);
 
+
+//#define WRITE_EEPROM
+#define READ_EEPROM
+
+const uint32_t TEST_ADDRESS = 0x0000;
+
 // Polling Interrupt
 bool irqNSTQ = false;
 bool irqRTC = false;
@@ -28,8 +34,28 @@ void remoteInit(void) {
   Serial.print(F("Remote Controller - Version: "));
   Serial.println(VERSION);
 
+  const char message[] = "Hello EEPROM!";
+  size_t len = sizeof(message);
+
   // E2PROM M24M01
   if (eeprom.begin()) {
+    #ifdef WRITE_EEPROM
+    if (!eeprom.write(TEST_ADDRESS, (const uint8_t *)message, len)) {
+      Serial.println("Write failed.");
+      return;
+    }
+    Serial.println("Write OK.");
+    #endif
+    #ifdef READ_EEPROM
+    char readBack[sizeof(message)] = {0};
+    if (!eeprom.read(TEST_ADDRESS, (uint8_t *)readBack, len)) {
+      Serial.println("Read failed.");
+      return;
+    }
+
+    Serial.print("Read back: ");
+    Serial.println(readBack);
+    #endif
     MESH_DEBUG_PRINTLN("M24M01 Initialized");
   }
   else
@@ -130,6 +156,10 @@ char readDTMF(void) {
   }
 
   return valDTMF;
+}
+
+void readRTCTime(void) {
+  //
 }
 
 void setTelcoPTT(bool state) {

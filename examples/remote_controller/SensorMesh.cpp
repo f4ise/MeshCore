@@ -781,7 +781,7 @@ void SensorMesh::begin(FILESYSTEM* fs) {
 
 #ifdef FORCE_RTC_TIME
   getRTCClock()->setCurrentTime(1715770351);  // 15 May 2024, 8:50pm
-  MESH_DEBUG_PRINTLN("FORCE RESET RTC TIME");
+  MESH_DEBUG_PRINTLN("Force Reset RTC time");
 #endif
 
 

@@ -98,7 +98,7 @@ uint32_t AutoDiscoverRTCClock::getCurrentTime() {
   }
 
   if (rtc_8025_success) {
-    MESH_DEBUG_PRINTLN("RX8025T: Reading time");
+    //MESH_DEBUG_PRINTLN("RX8025T: Reading time");
     return rtc_8025.now().unixtime();
   }
 
