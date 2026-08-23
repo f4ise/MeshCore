@@ -11,7 +11,10 @@ void remoteInit(void);
 void remoteLoop(void);
 
 void setChanAudio(bool state);
-void setRelayState(uint8_t num, bool state);
+void setRelayStateRC(uint8_t num, bool state);
+void setRelayStateExt1(uint8_t num, bool state);
+void setRelayStateExt2(uint8_t num, bool state);
+void setRelayStateUSB(uint8_t num, bool state);
 void setTelcoPTT(bool state);
 
 char readDTMF(void);

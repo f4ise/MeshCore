@@ -16,6 +16,9 @@
 M24M01  eeprom(Wire, 0x50);
 PCA9546 muxi2c(0x70, &Wire1);
 TCA9555 pioRC(0x20, &Wire1);
+TCA9555 pioExt1(0x21, &Wire1);
+TCA9555 pioExt2(0x21, &Wire1);
+TCA9555 pioUSB(0x22, &Wire1);
 
 
 //#define WRITE_EEPROM
@@ -61,6 +64,10 @@ void remoteInit(void) {
   else
     MESH_DEBUG_PRINTLN("M24M01 NOT Found");
 
+  // I/O Interrupt
+  pinMode(INT_PIO, INPUT);
+  pinMode(INT_RTC, INPUT);
+
   // Init I2C1
   Wire1.begin();
 
@@ -73,6 +80,49 @@ void remoteInit(void) {
   else
     MESH_DEBUG_PRINTLN("MUXI2C NOT Found");
 
+  // PIO Extensions
+  muxi2c.enableChannel(BUSEXT1);
+  if (pioExt1.begin()) {
+    delay(100);
+
+    for (uint8_t i = 0; i < 16; i++) {
+      pioExt1.pinMode1(i, OUTPUT);
+      pioExt1.write1(i, LOW);
+    }
+    MESH_DEBUG_PRINTLN("PIO Ext.1 Initialized");
+  }
+  else
+    MESH_DEBUG_PRINTLN("PIO Ext.1 NOT Found");
+  muxi2c.disableChannel(BUSEXT1);
+
+  muxi2c.enableChannel(BUSEXT2);
+  if (pioExt2.begin()) {
+    delay(100);
+
+    for (uint8_t i = 0; i < 16; i++) {
+      pioExt2.pinMode1(i, OUTPUT);
+      pioExt2.write1(i, LOW);
+    }
+    MESH_DEBUG_PRINTLN("PIO Ext.2 Initialized");
+  }
+  else
+    MESH_DEBUG_PRINTLN("PIO Ext.2 NOT Found");
+  muxi2c.disableChannel(BUSEXT2);
+
+  muxi2c.enableChannel(BUSUSB);
+  if (pioUSB.begin()) {
+    delay(100);
+
+    for (uint8_t i = 0; i < 16; i++) {
+      pioUSB.pinMode1(i, OUTPUT);
+      pioUSB.write1(i, LOW);
+    }
+    MESH_DEBUG_PRINTLN("PIO USB Initialized");
+  }
+  else
+    MESH_DEBUG_PRINTLN("PIO USB NOT Found");
+  muxi2c.disableChannel(BUSUSB);
+
   // PIO Remote Controller
   if (pioRC.begin()) {
     delay(100);
@@ -84,10 +134,10 @@ void remoteInit(void) {
         pioRC.write1(i, LOW);
       }
     }
-    MESH_DEBUG_PRINTLN("PIO Initialized");
+    MESH_DEBUG_PRINTLN("PIO R.C Initialized");
   }
   else
-    MESH_DEBUG_PRINTLN("PIO NOT Found");
+    MESH_DEBUG_PRINTLN("PIO R.C NOT Found");
 
   // Init Relays
 
@@ -125,7 +175,7 @@ void setChanAudio(bool state) {
   }
 }
 
-void setRelayState(uint8_t num, bool state)
+void setRelayStateRC(uint8_t num, bool state)
 {
   if(state == HIGH)
   {
@@ -139,6 +189,91 @@ void setRelayState(uint8_t num, bool state)
     delay(PULSE_DURATION);
     pioRC.write1((num * 2) + 1, LOW);
   }
+}
+
+void setRelayStateExt1(uint8_t num, bool state) {
+  muxi2c.enableChannel(BUSEXT1);
+  if ((num == 0) || (num == 2) || (num == 4) || (num == 6)){
+    if(state == HIGH)
+    {
+      pioExt1.write1(num, HIGH);
+      delay(PULSE_DURATION);
+      pioExt1.write1(num, LOW);
+    }
+    else
+    {
+      pioExt1.write1(num + 1, HIGH);
+      delay(PULSE_DURATION);
+      pioExt1.write1(num + 1, LOW);
+    }
+  }
+  else {
+    if(state == HIGH)
+    {
+      pioExt1.write1((15 - num), HIGH);
+      delay(PULSE_DURATION);
+      pioExt1.write1((15 - num), LOW);
+    }
+    else
+    {
+      pioExt1.write1((15 - num) + 1, HIGH);
+      delay(PULSE_DURATION);
+      pioExt1.write1((15 - num) + 1, LOW);
+    }
+  }
+  muxi2c.disableChannel(BUSEXT1);
+}
+
+void setRelayStateExt2(uint8_t num, bool state)
+{
+  muxi2c.enableChannel(BUSEXT2);
+  if ((num == 0) || (num == 2) || (num == 4) || (num == 6)){
+    if(state == HIGH)
+    {
+      pioExt2.write1(num, HIGH);
+      delay(PULSE_DURATION);
+      pioExt2.write1(num, LOW);
+    }
+    else
+    {
+      pioExt2.write1(num + 1, HIGH);
+      delay(PULSE_DURATION);
+      pioExt2.write1(num + 1, LOW);
+    }
+  }
+  else {
+    if(state == HIGH)
+    {
+      pioExt2.write1((15 - num), HIGH);
+      delay(PULSE_DURATION);
+      pioExt2.write1((15 - num), LOW);
+    }
+    else
+    {
+      pioExt2.write1((15 - num) + 1, HIGH);
+      delay(PULSE_DURATION);
+      pioExt2.write1((15 - num) + 1, LOW);
+    }
+  }
+  muxi2c.disableChannel(BUSEXT2);
+}
+
+void setRelayStateUSB(uint8_t num, bool state)
+{
+  muxi2c.enableChannel(BUSUSB);
+  if(state == HIGH)
+  {
+    pioUSB.write1((num * 2), HIGH);
+    delay(PULSE_DURATION);
+    pioUSB.write1((num * 2), LOW);
+  }
+  else
+  {
+    pioUSB.write1((num * 2) + 1, HIGH);
+    delay(PULSE_DURATION);
+    pioUSB.write1((num * 2) + 1, LOW);
+  }
+  muxi2c.disableChannel(BUSUSB);
 }
 
 char readDTMF(void) {
