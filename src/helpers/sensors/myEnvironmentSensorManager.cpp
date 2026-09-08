@@ -16,6 +16,7 @@ PCA9546 muxSensors(0x70, &Wire1);
 // Sensor library includes and static driver instances
 // ============================================================
 
+// SENSORS WIRE
 #if ENV_INCLUDE_BME680_BSEC
 #ifndef TELEM_BME680_ADDRESS
 #define TELEM_BME680_ADDRESS 0x76
@@ -99,6 +100,7 @@ static Adafruit_BMP280 BMP280(TELEM_WIRE);
 static Adafruit_INA3221 INA3221;
 #endif
 
+// SENSORS WIRE1 EXT.1
 #if ENV_INCLUDE_INA3221E1A
 #ifndef TELEM_INA3221E1A_ADDRESS
 #define TELEM_INA3221E1A_ADDRESS     0x40    // INA3221 3 channel current sensor I2C address
@@ -139,6 +141,49 @@ static Adafruit_INA3221 INA3221E1B;
 #endif
 #include <Adafruit_INA3221.h>
 static Adafruit_INA3221 INA3221E1C;
+#endif
+
+// SENSORS WIRE1 EXT.2
+#if ENV_INCLUDE_INA3221E2A
+#ifndef TELEM_INA3221E2A_ADDRESS
+#define TELEM_INA3221E2A_ADDRESS     0x40    // INA3221 3 channel current sensor I2C address
+#endif
+#ifndef TELEM_INA3221E2A_SHUNT_VALUE
+#define TELEM_INA3221E2A_SHUNT_VALUE 0.033 // most variants will have a 0.1 ohm shunts
+#endif
+#ifndef TELEM_INA3221E2A_NUM_CHANNELS
+#define TELEM_INA3221E2A_NUM_CHANNELS 3
+#endif
+#include <Adafruit_INA3221.h>
+static Adafruit_INA3221 INA3221E2A;
+#endif
+
+#if ENV_INCLUDE_INA3221E2B
+#ifndef TELEM_INA3221E2B_ADDRESS
+#define TELEM_INA3221E2B_ADDRESS     0x41    // INA3221 3 channel current sensor I2C address
+#endif
+#ifndef TELEM_INA3221E2B_SHUNT_VALUE
+#define TELEM_INA3221E2B_SHUNT_VALUE 0.033 // most variants will have a 0.1 ohm shunts
+#endif
+#ifndef TELEM_INA3221E2B_NUM_CHANNELS
+#define TELEM_INA3221E2B_NUM_CHANNELS 3
+#endif
+#include <Adafruit_INA3221.h>
+static Adafruit_INA3221 INA3221E2B;
+#endif
+
+#if ENV_INCLUDE_INA3221E2C
+#ifndef TELEM_INA3221E2C_ADDRESS
+#define TELEM_INA3221E2C_ADDRESS     0x42    // INA3221 3 channel current sensor I2C address
+#endif
+#ifndef TELEM_INA3221E2C_SHUNT_VALUE
+#define TELEM_INA3221E2C_SHUNT_VALUE 0.012 // most variants will have a 0.1 ohm shunts
+#endif
+#ifndef TELEM_INA3221E2C_NUM_CHANNELS
+#define TELEM_INA3221E2C_NUM_CHANNELS 3
+#endif
+#include <Adafruit_INA3221.h>
+static Adafruit_INA3221 INA3221E2C;
 #endif
 
 
@@ -286,6 +331,7 @@ static void query_ina3221(uint8_t ch, uint8_t sub_ch, CayenneLPP& lpp) {
 }
 #endif
 
+// SENSORS EXT.1
 #if ENV_INCLUDE_INA3221E1A
 static uint8_t init_ina3221e1a(TwoWire* wire, uint8_t addr) {
   muxSensors.enableChannel(0);
@@ -391,6 +437,115 @@ static void query_ina3221e1c(uint8_t ch, uint8_t sub_ch, CayenneLPP& lpp) {
     }
   }
   muxSensors.disableChannel(0);
+}
+#endif
+
+// SENSORS EXT.2
+#if ENV_INCLUDE_INA3221E2A
+static uint8_t init_ina3221e2a(TwoWire* wire, uint8_t addr) {
+  muxSensors.enableChannel(1);
+  if (!INA3221E2A.begin(addr, wire)) return 0;
+  for (int i = 0; i < TELEM_INA3221E2A_NUM_CHANNELS; i++) {
+    INA3221E2A.setShuntResistance(i, TELEM_INA3221E2A_SHUNT_VALUE);
+  }
+  // Each enabled hardware channel becomes its own telemetry channel.
+  uint8_t enabled = 0;
+  for (int i = 0; i < TELEM_INA3221E2A_NUM_CHANNELS; i++) {
+    if (INA3221E2A.isChannelEnabled(i)) enabled++;
+  }
+  muxSensors.disableChannel(1);
+  return enabled > 0 ? enabled : 1;
+}
+static void query_ina3221e2a(uint8_t ch, uint8_t sub_ch, CayenneLPP& lpp) {
+  // sub_ch is the index of the nth enabled hardware channel.
+  uint8_t seen = 0;
+  muxSensors.enableChannel(1);
+  for (int i = 0; i < TELEM_INA3221E2A_NUM_CHANNELS; i++) {
+    if (INA3221E2A.isChannelEnabled(i)) {
+      if (seen == sub_ch) {
+        float v = INA3221E2A.getBusVoltage(i);
+        float c = INA3221E2A.getCurrentAmps(i);
+        lpp.addVoltage(ch, v);
+        lpp.addCurrent(ch, c);
+        //lpp.addPower(ch, v * c);
+        return;
+      }
+      seen++;
+    }
+  }
+  muxSensors.disableChannel(1);
+}
+#endif
+
+#if ENV_INCLUDE_INA3221E2B
+static uint8_t init_ina3221e2b(TwoWire* wire, uint8_t addr) {
+  muxSensors.enableChannel(1);
+  if (!INA3221E2B.begin(addr, wire)) return 0;
+  for (int i = 0; i < TELEM_INA3221E2B_NUM_CHANNELS; i++) {
+    INA3221E2B.setShuntResistance(i, TELEM_INA3221E2B_SHUNT_VALUE);
+  }
+  // Each enabled hardware channel becomes its own telemetry channel.
+  uint8_t enabled = 0;
+  for (int i = 0; i < TELEM_INA3221E2B_NUM_CHANNELS; i++) {
+    if (INA3221E2B.isChannelEnabled(i)) enabled++;
+  }
+  muxSensors.disableChannel(1);
+  return enabled > 0 ? enabled : 1;
+}
+static void query_ina3221e2b(uint8_t ch, uint8_t sub_ch, CayenneLPP& lpp) {
+  // sub_ch is the index of the nth enabled hardware channel.
+  uint8_t seen = 0;
+  muxSensors.enableChannel(1);
+  for (int i = 0; i < TELEM_INA3221E2B_NUM_CHANNELS; i++) {
+    if (INA3221E2B.isChannelEnabled(i)) {
+      if (seen == sub_ch) {
+        float v = INA3221E2B.getBusVoltage(i);
+        float c = INA3221E2B.getCurrentAmps(i);
+        lpp.addVoltage(ch, v);
+        lpp.addCurrent(ch, c);
+        //lpp.addPower(ch, v * c);
+        return;
+      }
+      seen++;
+    }
+  }
+  muxSensors.disableChannel(1);
+}
+#endif
+
+#if ENV_INCLUDE_INA3221E2C
+static uint8_t init_ina3221e2c(TwoWire* wire, uint8_t addr) {
+  muxSensors.enableChannel(1);
+  if (!INA3221E2C.begin(addr, wire)) return 0;
+  for (int i = 0; i < TELEM_INA3221E2C_NUM_CHANNELS; i++) {
+    INA3221E2C.setShuntResistance(i, TELEM_INA3221E2C_SHUNT_VALUE);
+  }
+  // Each enabled hardware channel becomes its own telemetry channel.
+  uint8_t enabled = 0;
+  for (int i = 0; i < TELEM_INA3221E2C_NUM_CHANNELS; i++) {
+    if (INA3221E2C.isChannelEnabled(i)) enabled++;
+  }
+  muxSensors.disableChannel(1);
+  return enabled > 0 ? enabled : 1;
+}
+static void query_ina3221e2c(uint8_t ch, uint8_t sub_ch, CayenneLPP& lpp) {
+  // sub_ch is the index of the nth enabled hardware channel.
+  uint8_t seen = 0;
+  muxSensors.enableChannel(1);
+  for (int i = 0; i < TELEM_INA3221E2C_NUM_CHANNELS; i++) {
+    if (INA3221E2C.isChannelEnabled(i)) {
+      if (seen == sub_ch) {
+        float v = INA3221E2C.getBusVoltage(i);
+        float c = INA3221E2C.getCurrentAmps(i);
+        lpp.addVoltage(ch, v);
+        lpp.addCurrent(ch, c);
+        //lpp.addPower(ch, v * c);
+        return;
+      }
+      seen++;
+    }
+  }
+  muxSensors.disableChannel(1);
 }
 #endif
 
@@ -511,6 +666,20 @@ static const SensorDef SENSOR2_TABLE[] = {
 };
 static const size_t SENSOR2_TABLE_SIZE = (sizeof(SENSOR2_TABLE) / sizeof(SENSOR2_TABLE[0])) - 1;
 
+static const SensorDef SENSOR3_TABLE[] = {
+#if ENV_INCLUDE_INA3221E1A
+  { TELEM_INA3221E1A_ADDRESS, "INA3221E1A",      init_ina3221e2a,  query_ina3221e2a  },
+#endif
+#if ENV_INCLUDE_INA3221E1B
+{ TELEM_INA3221E1B_ADDRESS, "INA3221E1B",      init_ina3221e2b,  query_ina3221e2b  },
+#endif
+#if ENV_INCLUDE_INA3221E1C
+{ TELEM_INA3221E1C_ADDRESS, "INA3221E1C",      init_ina3221e2c,  query_ina3221e2c  },
+#endif
+  { 0, nullptr, nullptr, nullptr }  // sentinel — keeps the array non-empty
+};
+static const size_t SENSOR3_TABLE_SIZE = (sizeof(SENSOR3_TABLE) / sizeof(SENSOR3_TABLE[0])) - 1;
+
 // ============================================================
 // begin() — scan the I2C bus, then initialize only what was
 // found. A sensor whose address does not ACK during the scan
@@ -591,6 +760,29 @@ bool EnvironmentSensorManager::begin() {
     }
   }
   muxSensors.enableChannel(0);
+
+  muxSensors.enableChannel(1);
+  scanI2CBus(&Wire1, detected);
+
+  // Walk the sensor table and initialize only detected devices.
+  for (size_t i = 0; i < SENSOR3_TABLE_SIZE && _active_sensor_count < MAX_ACTIVE_SENSORS; i++) {
+    const SensorDef& def = SENSOR3_TABLE[i];
+    if (!detected[def.address]) {
+      MESH_DEBUG_PRINTLN("%s not detected at I2C address %02X", def.name, def.address);
+      continue;
+    }
+    uint8_t n = def.init(&Wire1, def.address);
+    if (n == 0) {
+      MESH_DEBUG_PRINTLN("%s found at %02X but failed to initialize", def.name, def.address);
+      continue;
+    }
+    MESH_DEBUG_PRINTLN("Found %s at address: %02X", def.name, def.address);
+    for (uint8_t sub = 0; sub < n && _active_sensor_count < MAX_ACTIVE_SENSORS; sub++) {
+      _active_sensors[_active_sensor_count++] = { def.query, sub };
+    }
+  }
+  muxSensors.enableChannel(1);
+
   return true;
 }
 
