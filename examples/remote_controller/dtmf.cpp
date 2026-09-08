@@ -46,42 +46,42 @@ void cmdDTMF(void) {
 
   switch (cmdParsed) {
     // Remote Controller
-    case 0010:
+    case 10:
         MESH_DEBUG_PRINTLN("CMD 0010");
         setRelayStateRC(0, false);
         statusACK = true;
         break;
-    case 0011:
+    case 11:
         MESH_DEBUG_PRINTLN("CMD 0011");
         setRelayStateRC(0, true);
         statusACK = true;
         break;
-    case 0020:
+    case 20:
         MESH_DEBUG_PRINTLN("CMD 0020");
         setRelayStateRC(1, false);
         statusACK = true;
         break;
-    case 0021:
+    case 21:
         MESH_DEBUG_PRINTLN("CMD 0021");
         setRelayStateRC(1, true);
         statusACK = true;
         break;
-    case 0030:
+    case 30:
         MESH_DEBUG_PRINTLN("CMD 0030");
         setRelayStateRC(2, false);
         statusACK = true;
         break;
-    case 0031:
+    case 31:
         MESH_DEBUG_PRINTLN("CMD 0031");
         setRelayStateRC(2, true);
         statusACK = true;
         break;
-    case 0040:
+    case 40:
         MESH_DEBUG_PRINTLN("CMD 0040");
         setRelayStateRC(3, false);
         statusACK = true;
         break;
-    case 0041:
+    case 41:
         MESH_DEBUG_PRINTLN("CMD 0041");
         setRelayStateRC(3, true);
         statusACK = true;
