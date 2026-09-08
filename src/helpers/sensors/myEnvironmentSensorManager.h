@@ -6,7 +6,7 @@
 
 class EnvironmentSensorManager : public SensorManager {
 protected:
-  static const int MAX_ACTIVE_SENSORS = 16;
+  static const int MAX_ACTIVE_SENSORS = 32;
 
   // Query function pointer + sub-channel index (for multi-channel sensors like INA3221).
   // Sub-channel is 0 for all single-output sensors.

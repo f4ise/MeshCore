@@ -2,6 +2,10 @@
 
 #include <Wire.h>
 
+#include <TCA9548.h>
+
+PCA9546 muxSensors(0x70, &Wire1);
+
 #if ENV_PIN_SDA && ENV_PIN_SCL
 #define TELEM_WIRE &Wire1  // Use Wire1 as the I2C bus for Environment Sensors
 #else
@@ -46,12 +50,6 @@ static uint32_t bsec_last_save_ms    = 0;
 static Adafruit_BME680 BME680(TELEM_WIRE);
 #endif
 
-#ifdef ENV_INCLUDE_BMP085
-#define TELEM_BMP085_SEALEVELPRESSURE_HPA (1013.25)
-#include <Adafruit_BMP085.h>
-static Adafruit_BMP085 BMP085;
-#endif
-
 #if ENV_INCLUDE_AHTX0
 #ifndef TELEM_AHTX_ADDRESS
 #define TELEM_AHTX_ADDRESS      0x38      // AHT10, AHT20 temperature and humidity sensor I2C address
@@ -69,6 +67,15 @@ static Adafruit_AHTX0 AHTX0;
 static Adafruit_BME280 BME280;
 #endif
 
+#if ENV_INCLUDE_BME280B
+#ifndef TELEM_BME280B_ADDRESS
+#define TELEM_BME280B_ADDRESS    0x77      // BME280 environmental sensor I2C address
+#endif
+#define TELEM_BME280B_SEALEVELPRESSURE_HPA (1013.25)    // Atmospheric pressure at sea level
+#include <Adafruit_BME280.h>
+static Adafruit_BME280 BME280B;
+#endif
+
 #if ENV_INCLUDE_BMP280
 #ifndef TELEM_BMP280_ADDRESS
 #define TELEM_BMP280_ADDRESS    0x76      // BMP280 environmental sensor I2C address
@@ -76,24 +83,6 @@ static Adafruit_BME280 BME280;
 #define TELEM_BMP280_SEALEVELPRESSURE_HPA (1013.25)    // Atmospheric pressure at sea level
 #include <Adafruit_BMP280.h>
 static Adafruit_BMP280 BMP280(TELEM_WIRE);
-#endif
-
-#if ENV_INCLUDE_SHTC3
-#include <Adafruit_SHTC3.h>
-static Adafruit_SHTC3 SHTC3;
-#endif
-
-#if ENV_INCLUDE_SHT4X
-#ifndef TELEM_SHT4X_ADDRESS
-#define TELEM_SHT4X_ADDRESS 0x44
-#endif
-#include <SensirionI2cSht4x.h>
-static SensirionI2cSht4x SHT4X;
-#endif
-
-#if ENV_INCLUDE_LPS22HB
-#include <Arduino_LPS22HB.h>
-LPS22HBClass LPS22HB(*TELEM_WIRE);
 #endif
 
 #if ENV_INCLUDE_INA3221
@@ -110,105 +99,48 @@ LPS22HBClass LPS22HB(*TELEM_WIRE);
 static Adafruit_INA3221 INA3221;
 #endif
 
-#if ENV_INCLUDE_INA219
-#ifndef TELEM_INA219_ADDRESS
-#define TELEM_INA219_ADDRESS    0x40      // INA219 single channel current sensor I2C address
+#if ENV_INCLUDE_INA3221E1A
+#ifndef TELEM_INA3221E1A_ADDRESS
+#define TELEM_INA3221E1A_ADDRESS     0x40    // INA3221 3 channel current sensor I2C address
 #endif
-#include <Adafruit_INA219.h>
-static Adafruit_INA219 INA219(TELEM_INA219_ADDRESS);
+#ifndef TELEM_INA3221E1A_SHUNT_VALUE
+#define TELEM_INA3221E1A_SHUNT_VALUE 0.033 // most variants will have a 0.1 ohm shunts
 #endif
-
-#if ENV_INCLUDE_INA260
-#ifndef TELEM_INA260_ADDRESS
-#define TELEM_INA260_ADDRESS    0x41      // INA260 single channel current sensor I2C address
+#ifndef TELEM_INA3221E1A_NUM_CHANNELS
+#define TELEM_INA3221E1A_NUM_CHANNELS 3
 #endif
-#include <Adafruit_INA260.h>
-static Adafruit_INA260 INA260;
+#include <Adafruit_INA3221.h>
+static Adafruit_INA3221 INA3221E1A;
 #endif
 
-#if ENV_INCLUDE_INA226
-#ifndef TELEM_INA226_ADDRESS
-#define TELEM_INA226_ADDRESS     0x44
+#if ENV_INCLUDE_INA3221E1B
+#ifndef TELEM_INA3221E1B_ADDRESS
+#define TELEM_INA3221E1B_ADDRESS     0x41    // INA3221 3 channel current sensor I2C address
 #endif
-#define TELEM_INA226_SHUNT_VALUE 0.100
-#define TELEM_INA226_MAX_AMP     0.8
-#include <INA226.h>
-static INA226 INA226(TELEM_INA226_ADDRESS, TELEM_WIRE);
+#ifndef TELEM_INA3221E1B_SHUNT_VALUE
+#define TELEM_INA3221E1B_SHUNT_VALUE 0.033 // most variants will have a 0.1 ohm shunts
 #endif
-
-#if ENV_INCLUDE_MLX90614
-#ifndef TELEM_MLX90614_ADDRESS
-#define TELEM_MLX90614_ADDRESS 0x5A      // MLX90614 IR temperature sensor I2C address
+#ifndef TELEM_INA3221E1B_NUM_CHANNELS
+#define TELEM_INA3221E1B_NUM_CHANNELS 3
 #endif
-#include <Adafruit_MLX90614.h>
-static Adafruit_MLX90614 MLX90614;
+#include <Adafruit_INA3221.h>
+static Adafruit_INA3221 INA3221E1B;
 #endif
 
-#if ENV_INCLUDE_VL53L0X
-#ifndef TELEM_VL53L0X_ADDRESS
-#define TELEM_VL53L0X_ADDRESS 0x29      // VL53L0X time-of-flight distance sensor I2C address
+#if ENV_INCLUDE_INA3221E1C
+#ifndef TELEM_INA3221E1C_ADDRESS
+#define TELEM_INA3221E1C_ADDRESS     0x42    // INA3221 3 channel current sensor I2C address
 #endif
-#include <Adafruit_VL53L0X.h>
-static Adafruit_VL53L0X VL53L0X;
+#ifndef TELEM_INA3221E1C_SHUNT_VALUE
+#define TELEM_INA3221E1C_SHUNT_VALUE 0.012 // most variants will have a 0.1 ohm shunts
 #endif
-
-#if ENV_INCLUDE_RAK12035
-#ifndef TELEM_RAK12035_ADDRESS
-#define TELEM_RAK12035_ADDRESS 0x20      // RAK12035 Soil Moisture sensor I2C address
+#ifndef TELEM_INA3221E1C_NUM_CHANNELS
+#define TELEM_INA3221E1C_NUM_CHANNELS 3
 #endif
-#include "RAK12035_SoilMoisture.h"
-static RAK12035_SoilMoisture RAK12035;
+#include <Adafruit_INA3221.h>
+static Adafruit_INA3221 INA3221E1C;
 #endif
 
-#if ENV_INCLUDE_GPS && defined(RAK_BOARD) && !defined(RAK_WISMESH_TAG)
-#define RAK_WISBLOCK_GPS
-#endif
-
-#ifdef RAK_WISBLOCK_GPS
-static uint32_t gpsResetPin = 0;
-static bool i2cGPSFlag = false;
-static bool serialGPSFlag = false;
-#ifndef TELEM_RAK12500_ADDRESS
-#define TELEM_RAK12500_ADDRESS   0x42     //RAK12500 Ublox GPS via i2c
-#endif
-#include <SparkFun_u-blox_GNSS_Arduino_Library.h>
-static SFE_UBLOX_GNSS ublox_GNSS;
-
-class RAK12500LocationProvider : public LocationProvider {
-  long _lat = 0;
-  long _lng = 0;
-  long _alt = 0;
-  int _sats = 0;
-  long _epoch = 0;
-  bool _fix = false;
-public:
-  long getLatitude() override { return _lat; }
-  long getLongitude() override { return _lng; }
-  long getAltitude() override { return _alt; }
-  long satellitesCount() override { return _sats; }
-  bool isValid() override { return _fix; }
-  long getTimestamp() override { return _epoch; }
-  void sendSentence(const char * sentence) override { }
-  void reset() override { }
-  void begin() override { }
-  void stop() override { }
-  void loop() override {
-    if (ublox_GNSS.getGnssFixOk(8)) {
-      _fix = true;
-      _lat = ublox_GNSS.getLatitude(2) / 10;
-      _lng = ublox_GNSS.getLongitude(2) / 10;
-      _alt = ublox_GNSS.getAltitude(2);
-      _sats = ublox_GNSS.getSIV(2);
-    } else {
-      _fix = false;
-    }
-    _epoch = ublox_GNSS.getUnixEpoch(2);
-  }
-  bool isEnabled() override { return true; }
-};
-
-static RAK12500LocationProvider RAK12500_provider;
-#endif
 
 // ============================================================
 // I2C bus scanner
@@ -284,7 +216,28 @@ static void query_bme280(uint8_t ch, uint8_t, CayenneLPP& lpp) {
     lpp.addTemperature(ch, BME280.readTemperature());
     lpp.addRelativeHumidity(ch, BME280.readHumidity());
     lpp.addBarometricPressure(ch, BME280.readPressure() / 100);
-    lpp.addAltitude(ch, BME280.readAltitude(TELEM_BME280_SEALEVELPRESSURE_HPA));
+    //lpp.addAltitude(ch, BME280.readAltitude(TELEM_BME280_SEALEVELPRESSURE_HPA));
+  }
+}
+#endif
+
+#if ENV_INCLUDE_BME280B
+static uint8_t init_bme280b(TwoWire* wire, uint8_t addr) {
+  if (!BME280B.begin(addr, wire)) return 0;
+  BME280B.setSampling(Adafruit_BME280::MODE_FORCED,
+                     Adafruit_BME280::SAMPLING_X1,
+                     Adafruit_BME280::SAMPLING_X1,
+                     Adafruit_BME280::SAMPLING_X1,
+                     Adafruit_BME280::FILTER_OFF,
+                     Adafruit_BME280::STANDBY_MS_1000);
+  return 1;
+}
+static void query_bme280b(uint8_t ch, uint8_t, CayenneLPP& lpp) {
+  if (BME280.takeForcedMeasurement()) {
+    lpp.addTemperature(ch, BME280B.readTemperature());
+    lpp.addRelativeHumidity(ch, BME280B.readHumidity());
+    lpp.addBarometricPressure(ch, BME280B.readPressure() / 100);
+    //lpp.addAltitude(ch, BME280B.readAltitude(TELEM_BME280B_SEALEVELPRESSURE_HPA));
   }
 }
 #endif
@@ -298,47 +251,6 @@ static void query_bmp280(uint8_t ch, uint8_t, CayenneLPP& lpp) {
   lpp.addTemperature(ch, BMP280.readTemperature());
   lpp.addBarometricPressure(ch, BMP280.readPressure() / 100);
   lpp.addAltitude(ch, BMP280.readAltitude(TELEM_BMP280_SEALEVELPRESSURE_HPA));
-}
-#endif
-
-#if ENV_INCLUDE_SHTC3
-static uint8_t init_shtc3(TwoWire* wire, uint8_t) {
-  // Adafruit_SHTC3::begin() does not accept an address (fixed at 0x70).
-  return SHTC3.begin(wire) ? 1 : 0;
-}
-static void query_shtc3(uint8_t ch, uint8_t, CayenneLPP& lpp) {
-  sensors_event_t humidity, temp;
-  SHTC3.getEvent(&humidity, &temp);
-  lpp.addTemperature(ch, temp.temperature);
-  lpp.addRelativeHumidity(ch, humidity.relative_humidity);
-}
-#endif
-
-#if ENV_INCLUDE_SHT4X
-static uint8_t init_sht4x(TwoWire* wire, uint8_t addr) {
-  // SensirionI2cSht4x::begin() does not probe the hardware; use serialNumber()
-  // as the actual presence check since it performs a real I2C transaction.
-  SHT4X.begin(*wire, addr);
-  uint32_t serial = 0;
-  return (SHT4X.serialNumber(serial) == 0) ? 1 : 0;
-}
-static void query_sht4x(uint8_t ch, uint8_t, CayenneLPP& lpp) {
-  float temperature, humidity;
-  if (SHT4X.measureLowestPrecision(temperature, humidity) == 0) {
-    lpp.addTemperature(ch, temperature);
-    lpp.addRelativeHumidity(ch, humidity);
-  }
-}
-#endif
-
-#if ENV_INCLUDE_LPS22HB
-static uint8_t init_lps22hb(TwoWire*, uint8_t) {
-  // LPS22HBClass is constructed with the wire reference; begin() uses it.
-  return LPS22HB.begin() ? 1 : 0;
-}
-static void query_lps22hb(uint8_t ch, uint8_t, CayenneLPP& lpp) {
-  lpp.addTemperature(ch, LPS22HB.readTemperature());
-  lpp.addBarometricPressure(ch, LPS22HB.readPressure() * 10); // convert kPa to hPa
 }
 #endif
 
@@ -365,7 +277,7 @@ static void query_ina3221(uint8_t ch, uint8_t sub_ch, CayenneLPP& lpp) {
         float c = INA3221.getCurrentAmps(i);
         lpp.addVoltage(ch, v);
         lpp.addCurrent(ch, c);
-        lpp.addPower(ch, v * c);
+        //lpp.addPower(ch, v * c);
         return;
       }
       seen++;
@@ -374,106 +286,114 @@ static void query_ina3221(uint8_t ch, uint8_t sub_ch, CayenneLPP& lpp) {
 }
 #endif
 
-#if ENV_INCLUDE_INA219
-static uint8_t init_ina219(TwoWire* wire, uint8_t) {
-  // INA219 static instance was constructed with the address; begin() uses it.
-  return INA219.begin(wire) ? 1 : 0;
-}
-static void query_ina219(uint8_t ch, uint8_t, CayenneLPP& lpp) {
-  lpp.addVoltage(ch, INA219.getBusVoltage_V());
-  lpp.addCurrent(ch, INA219.getCurrent_mA() / 1000.0f);
-  lpp.addPower(ch, INA219.getPower_mW() / 1000.0f);
-}
-#endif
-
-#if ENV_INCLUDE_INA260
-static uint8_t init_ina260(TwoWire* wire, uint8_t addr) {
-  return INA260.begin(addr, wire) ? 1 : 0;
-}
-static void query_ina260(uint8_t ch, uint8_t, CayenneLPP& lpp) {
-  lpp.addVoltage(ch, INA260.readBusVoltage() / 1000.0f);
-  lpp.addCurrent(ch, INA260.readCurrent() / 1000.0f);
-  lpp.addPower(ch, INA260.readPower() / 1000.0f);
-}
-#endif
-
-#if ENV_INCLUDE_INA226
-static uint8_t init_ina226(TwoWire*, uint8_t) {
-  // INA226 static instance was constructed with address and wire.
-  if (!INA226.begin()) return 0;
-  INA226.setMaxCurrentShunt(TELEM_INA226_MAX_AMP, TELEM_INA226_SHUNT_VALUE);
-  return 1;
-}
-static void query_ina226(uint8_t ch, uint8_t, CayenneLPP& lpp) {
-  lpp.addVoltage(ch, INA226.getBusVoltage());
-  lpp.addCurrent(ch, INA226.getCurrent_mA() / 1000.0f);
-  lpp.addPower(ch, INA226.getPower_mW() / 1000.0f);
-}
-#endif
-
-#if ENV_INCLUDE_MLX90614
-static uint8_t init_mlx90614(TwoWire* wire, uint8_t addr) {
-  return MLX90614.begin(addr, wire) ? 2 : 0;  // 2 channels: object temp, ambient temp
-}
-static void query_mlx90614(uint8_t ch, uint8_t sub_ch, CayenneLPP& lpp) {
-  if (sub_ch == 0)
-    lpp.addTemperature(ch, MLX90614.readObjectTempC());
-  else
-    lpp.addTemperature(ch, MLX90614.readAmbientTempC());
-}
-#endif
-
-#if ENV_INCLUDE_VL53L0X
-static uint8_t init_vl53l0x(TwoWire* wire, uint8_t addr) {
-  return VL53L0X.begin(addr, false, wire) ? 1 : 0;
-}
-static void query_vl53l0x(uint8_t ch, uint8_t, CayenneLPP& lpp) {
-  VL53L0X_RangingMeasurementData_t measure;
-  VL53L0X.rangingTest(&measure, false);
-  lpp.addDistance(ch, measure.RangeStatus != 4 ? measure.RangeMilliMeter / 1000.0f : 0.0f);
-}
-#endif
-
-#ifdef ENV_INCLUDE_BMP085
-static uint8_t init_bmp085(TwoWire* wire, uint8_t) {
-  return BMP085.begin(0, wire) ? 1 : 0;  // mode 0 = ULTRALOWPOWER
-}
-static void query_bmp085(uint8_t ch, uint8_t, CayenneLPP& lpp) {
-  lpp.addTemperature(ch, BMP085.readTemperature());
-  lpp.addBarometricPressure(ch, BMP085.readPressure() / 100);
-  lpp.addAltitude(ch, BMP085.readAltitude(TELEM_BMP085_SEALEVELPRESSURE_HPA * 100));
-}
-#endif
-
-#if ENV_INCLUDE_RAK12035
-static uint8_t init_rak12035(TwoWire* wire, uint8_t addr) {
-  // RAK12035 requires setup() before begin().
-  RAK12035.setup(*wire);
-  if (!RAK12035.begin(addr)) return 0;
-#ifdef ENABLE_RAK12035_CALIBRATION
-  return 2;  // moisture channel + calibration channel
-#else
-  return 1;
-#endif
-}
-static void query_rak12035(uint8_t ch, uint8_t sub_ch, CayenneLPP& lpp) {
-  if (sub_ch == 0) {
-    lpp.addTemperature(ch, RAK12035.get_sensor_temperature());
-    lpp.addPercentage(ch, RAK12035.get_sensor_moisture());
-  } else {
-#ifdef ENABLE_RAK12035_CALIBRATION
-    float cap = RAK12035.get_sensor_capacitance();
-    float wet = RAK12035.get_humidity_full();
-    float dry = RAK12035.get_humidity_zero();
-    lpp.addFrequency(ch, cap);
-    lpp.addTemperature(ch, wet);
-    lpp.addPower(ch, dry);
-    if (cap > dry) RAK12035.set_humidity_zero(cap);
-    if (cap < wet) RAK12035.set_humidity_full(cap);
-#endif
+#if ENV_INCLUDE_INA3221E1A
+static uint8_t init_ina3221e1a(TwoWire* wire, uint8_t addr) {
+  muxSensors.enableChannel(0);
+  if (!INA3221E1A.begin(addr, wire)) return 0;
+  for (int i = 0; i < TELEM_INA3221E1A_NUM_CHANNELS; i++) {
+    INA3221E1A.setShuntResistance(i, TELEM_INA3221E1A_SHUNT_VALUE);
   }
+  // Each enabled hardware channel becomes its own telemetry channel.
+  uint8_t enabled = 0;
+  for (int i = 0; i < TELEM_INA3221E1A_NUM_CHANNELS; i++) {
+    if (INA3221E1A.isChannelEnabled(i)) enabled++;
+  }
+  muxSensors.disableChannel(0);
+  return enabled > 0 ? enabled : 1;
+}
+static void query_ina3221e1a(uint8_t ch, uint8_t sub_ch, CayenneLPP& lpp) {
+  // sub_ch is the index of the nth enabled hardware channel.
+  uint8_t seen = 0;
+  muxSensors.enableChannel(0);
+  for (int i = 0; i < TELEM_INA3221E1A_NUM_CHANNELS; i++) {
+    if (INA3221E1A.isChannelEnabled(i)) {
+      if (seen == sub_ch) {
+        float v = INA3221E1A.getBusVoltage(i);
+        float c = INA3221E1A.getCurrentAmps(i);
+        lpp.addVoltage(ch, v);
+        lpp.addCurrent(ch, c);
+        //lpp.addPower(ch, v * c);
+        return;
+      }
+      seen++;
+    }
+  }
+  muxSensors.disableChannel(0);
 }
 #endif
+
+#if ENV_INCLUDE_INA3221E1B
+static uint8_t init_ina3221e1b(TwoWire* wire, uint8_t addr) {
+  muxSensors.enableChannel(0);
+  if (!INA3221E1B.begin(addr, wire)) return 0;
+  for (int i = 0; i < TELEM_INA3221E1B_NUM_CHANNELS; i++) {
+    INA3221E1B.setShuntResistance(i, TELEM_INA3221E1B_SHUNT_VALUE);
+  }
+  // Each enabled hardware channel becomes its own telemetry channel.
+  uint8_t enabled = 0;
+  for (int i = 0; i < TELEM_INA3221E1B_NUM_CHANNELS; i++) {
+    if (INA3221E1B.isChannelEnabled(i)) enabled++;
+  }
+  muxSensors.disableChannel(0);
+  return enabled > 0 ? enabled : 1;
+}
+static void query_ina3221e1b(uint8_t ch, uint8_t sub_ch, CayenneLPP& lpp) {
+  // sub_ch is the index of the nth enabled hardware channel.
+  uint8_t seen = 0;
+  muxSensors.enableChannel(0);
+  for (int i = 0; i < TELEM_INA3221E1B_NUM_CHANNELS; i++) {
+    if (INA3221E1B.isChannelEnabled(i)) {
+      if (seen == sub_ch) {
+        float v = INA3221E1B.getBusVoltage(i);
+        float c = INA3221E1B.getCurrentAmps(i);
+        lpp.addVoltage(ch, v);
+        lpp.addCurrent(ch, c);
+        //lpp.addPower(ch, v * c);
+        return;
+      }
+      seen++;
+    }
+  }
+  muxSensors.disableChannel(0);
+}
+#endif
+
+#if ENV_INCLUDE_INA3221E1C
+static uint8_t init_ina3221e1c(TwoWire* wire, uint8_t addr) {
+  muxSensors.enableChannel(0);
+  if (!INA3221E1C.begin(addr, wire)) return 0;
+  for (int i = 0; i < TELEM_INA3221E1C_NUM_CHANNELS; i++) {
+    INA3221E1C.setShuntResistance(i, TELEM_INA3221E1C_SHUNT_VALUE);
+  }
+  // Each enabled hardware channel becomes its own telemetry channel.
+  uint8_t enabled = 0;
+  for (int i = 0; i < TELEM_INA3221E1C_NUM_CHANNELS; i++) {
+    if (INA3221E1C.isChannelEnabled(i)) enabled++;
+  }
+  muxSensors.disableChannel(0);
+  return enabled > 0 ? enabled : 1;
+}
+static void query_ina3221e1c(uint8_t ch, uint8_t sub_ch, CayenneLPP& lpp) {
+  // sub_ch is the index of the nth enabled hardware channel.
+  uint8_t seen = 0;
+  muxSensors.enableChannel(0);
+  for (int i = 0; i < TELEM_INA3221E1C_NUM_CHANNELS; i++) {
+    if (INA3221E1C.isChannelEnabled(i)) {
+      if (seen == sub_ch) {
+        float v = INA3221E1C.getBusVoltage(i);
+        float c = INA3221E1C.getCurrentAmps(i);
+        lpp.addVoltage(ch, v);
+        lpp.addCurrent(ch, c);
+        //lpp.addPower(ch, v * c);
+        return;
+      }
+      seen++;
+    }
+  }
+  muxSensors.disableChannel(0);
+}
+#endif
+
 
 #if ENV_INCLUDE_BME680_BSEC
 static void bsec_load_state() {
@@ -564,46 +484,32 @@ static const SensorDef SENSOR_TABLE[] = {
 #if ENV_INCLUDE_BME280
   { TELEM_BME280_ADDRESS,  "BME280",       init_bme280,   query_bme280   },
 #endif
+#if ENV_INCLUDE_BME280B
+  { TELEM_BME280B_ADDRESS,  "BME280B",       init_bme280b,   query_bme280b   },
+#endif
 #if ENV_INCLUDE_BMP280
   { TELEM_BMP280_ADDRESS,  "BMP280",       init_bmp280,   query_bmp280   },
-#endif
-#if ENV_INCLUDE_SHTC3
-  { 0x70,                  "SHTC3",        init_shtc3,    query_shtc3    },
-#endif
-#if ENV_INCLUDE_SHT4X
-  { TELEM_SHT4X_ADDRESS,   "SHT4X",        init_sht4x,    query_sht4x    },
-#endif
-#if ENV_INCLUDE_LPS22HB
-  { 0x5C,                  "LPS22HB",      init_lps22hb,  query_lps22hb  },
 #endif
 #if ENV_INCLUDE_INA3221
   { TELEM_INA3221_ADDRESS, "INA3221",      init_ina3221,  query_ina3221  },
 #endif
-#if ENV_INCLUDE_INA219
-  { TELEM_INA219_ADDRESS,  "INA219",       init_ina219,   query_ina219   },
+  { 0, nullptr, nullptr, nullptr }  // sentinel — keeps the array non-empty
+};
+static const size_t SENSOR_TABLE_SIZE = (sizeof(SENSOR_TABLE) / sizeof(SENSOR_TABLE[0])) - 1;
+
+static const SensorDef SENSOR2_TABLE[] = {
+#if ENV_INCLUDE_INA3221E1A
+  { TELEM_INA3221E1A_ADDRESS, "INA3221E1A",      init_ina3221e1a,  query_ina3221e1a  },
 #endif
-#if ENV_INCLUDE_INA260
-  { TELEM_INA260_ADDRESS,  "INA260",       init_ina260,   query_ina260   },
+#if ENV_INCLUDE_INA3221E1B
+{ TELEM_INA3221E1B_ADDRESS, "INA3221E1B",      init_ina3221e1b,  query_ina3221e1b  },
 #endif
-#if ENV_INCLUDE_INA226
-  { TELEM_INA226_ADDRESS,  "INA226",       init_ina226,   query_ina226   },
-#endif
-#if ENV_INCLUDE_MLX90614
-  { TELEM_MLX90614_ADDRESS,"MLX90614",     init_mlx90614, query_mlx90614 },
-#endif
-#if ENV_INCLUDE_VL53L0X
-  { TELEM_VL53L0X_ADDRESS, "VL53L0X",      init_vl53l0x,  query_vl53l0x  },
-#endif
-#ifdef ENV_INCLUDE_BMP085
-  { 0x77,                  "BMP085",       init_bmp085,   query_bmp085   },
-#endif
-#if ENV_INCLUDE_RAK12035
-  { TELEM_RAK12035_ADDRESS,"RAK12035",     init_rak12035, query_rak12035 },
+#if ENV_INCLUDE_INA3221E1C
+{ TELEM_INA3221E1C_ADDRESS, "INA3221E1C",      init_ina3221e1c,  query_ina3221e1c  },
 #endif
   { 0, nullptr, nullptr, nullptr }  // sentinel — keeps the array non-empty
 };
-
-static const size_t SENSOR_TABLE_SIZE = (sizeof(SENSOR_TABLE) / sizeof(SENSOR_TABLE[0])) - 1;
+static const size_t SENSOR2_TABLE_SIZE = (sizeof(SENSOR2_TABLE) / sizeof(SENSOR2_TABLE[0])) - 1;
 
 // ============================================================
 // begin() — scan the I2C bus, then initialize only what was
@@ -655,6 +561,36 @@ bool EnvironmentSensorManager::begin() {
     }
   }
 
+  // MUX I2C
+  if (muxSensors.begin()) {
+    delay(100);
+    muxSensors.disableAllChannels();
+    MESH_DEBUG_PRINTLN("MUX SENSORS Initialized");
+  }
+  else
+    MESH_DEBUG_PRINTLN("MUX SENSORS NOT Found");
+
+  muxSensors.enableChannel(0);
+  scanI2CBus(&Wire1, detected);
+
+  // Walk the sensor table and initialize only detected devices.
+  for (size_t i = 0; i < SENSOR2_TABLE_SIZE && _active_sensor_count < MAX_ACTIVE_SENSORS; i++) {
+    const SensorDef& def = SENSOR2_TABLE[i];
+    if (!detected[def.address]) {
+      MESH_DEBUG_PRINTLN("%s not detected at I2C address %02X", def.name, def.address);
+      continue;
+    }
+    uint8_t n = def.init(&Wire1, def.address);
+    if (n == 0) {
+      MESH_DEBUG_PRINTLN("%s found at %02X but failed to initialize", def.name, def.address);
+      continue;
+    }
+    MESH_DEBUG_PRINTLN("Found %s at address: %02X", def.name, def.address);
+    for (uint8_t sub = 0; sub < n && _active_sensor_count < MAX_ACTIVE_SENSORS; sub++) {
+      _active_sensors[_active_sensor_count++] = { def.query, sub };
+    }
+  }
+  muxSensors.enableChannel(0);
   return true;
 }
 

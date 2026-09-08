@@ -68,9 +68,6 @@ void remoteInit(void) {
   pinMode(INT_PIO, INPUT);
   pinMode(INT_RTC, INPUT);
 
-  // Init I2C1
-  Wire1.begin();
-
   // MUX I2C
   if (muxi2c.begin()) {
     delay(100);

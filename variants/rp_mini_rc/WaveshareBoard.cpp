@@ -21,6 +21,7 @@ void WaveshareBoard::begin() {
 #endif
 
   Wire.begin();
+  Wire1.begin();
 
   delay(10); // give sx1262 some time to power up
 }

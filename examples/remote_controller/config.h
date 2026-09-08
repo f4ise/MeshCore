@@ -6,7 +6,7 @@
 #define CONFIG_H
 
 // APPS
-#define VERSION             "0.1A"
+#define VERSION             "0.2A"
 
 // AUDIO
 #define AUDIO1              13      // AM D578
