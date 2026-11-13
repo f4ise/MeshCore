@@ -109,9 +109,6 @@ void setup() {
 
   sensors.begin();
 
-  // Init Remote Controller
-  remoteInit();
-
   the_mesh.begin(fs);
 
 #ifdef DISPLAY_CLASS
@@ -161,10 +158,6 @@ void loop() {
 
   the_mesh.loop();
   sensors.loop();
-
-  // Loop Remote Controller
-  remoteLoop();
-
 #ifdef DISPLAY_CLASS
   ui_task.loop();
 #endif
@@ -172,4 +165,14 @@ void loop() {
 #ifdef HAS_EXTERNAL_WATCHDOG
   external_watchdog.loop();
 #endif
+}
+
+void setup1() {
+  // Init Remote Controller
+  remoteInit();
+}
+
+void loop1() {
+  // Loop Remote Controller
+  remoteLoop();
 }

@@ -121,6 +121,7 @@ void remoteInit(void) {
   }
   else
     MESH_DEBUG_PRINTLN("PIO USB NOT Found");
+
   muxi2c.disableChannel(BUSUSB);
 
   // PIO Remote Controller
@@ -141,6 +142,13 @@ void remoteInit(void) {
 
   // Init Relays
 
+  setRelayStateRC(0, true);
+  setRelayStateRC(1, true);
+  setRelayStateRC(2, true);
+  setRelayStateRC(3, true);
+
+  setRelayStateUSB(0, true);
+  setRelayStateUSB(1, true);
 }
 
 //--------------------------------------------------------------------------
